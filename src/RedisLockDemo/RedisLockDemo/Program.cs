@@ -1,4 +1,5 @@
-﻿namespace RedisLockDemo
+﻿
+namespace RedisLockDemo
 {
     using StackExchange.Redis;
     using System;
@@ -8,12 +9,23 @@
     {
         static void Main(string[] args)
         {
+            //StackExchangeLock();
+            CsRedisLock.Test();
+
+            Console.WriteLine("end");
+            Console.Read();
+
+        }
+
+        private static void StackExchangeLock()
+        {
             string lockKey = "lock:eat";
             TimeSpan expiration = TimeSpan.FromSeconds(5);
             //5 person eat something...
-            Parallel.For(0, 5, x =>
+            Parallel.For(0, 15, x =>
             {
                 string person = $"person:{x}";
+                Connection.GetDatabase().StringSet(person, x);
                 var val = 0;
                 bool isLocked = AcquireLock(lockKey, person, expiration);
                 while (!isLocked && val <= 5000)
@@ -40,10 +52,6 @@
                     Console.WriteLine($"{person} begin eat food(without lock) at {DateTimeOffset.Now.ToUnixTimeMilliseconds()}.");
                 }
             });
-
-            Console.WriteLine("end");
-            Console.Read();
-
         }
 
         /// <summary>
@@ -110,6 +118,7 @@
             {
                 AbortOnConnectFail = false,
                 ConnectTimeout = 5000,
+                Password = "123456"
             };
 
             configuration.EndPoints.Add("localhost", 6379);
@@ -124,3 +133,4 @@
         public static ConnectionMultiplexer Connection => lazyConnection.Value;
     }
 }
+
